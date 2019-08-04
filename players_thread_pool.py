@@ -1,5 +1,6 @@
 import threading
 import socket
+from game import Player
 
 class PlayersThreadPool(object):
     MAX_PLAYERS = 100
@@ -13,10 +14,10 @@ class PlayersThreadPool(object):
         self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def add_player(self, conn):
-        if self._min_unused_id >= MAX_PLAYERS:
+        if self._min_unused_id >= self.MAX_PLAYERS:
             raise ValueError('Maximum players limit reached')
         cur_id = self._min_unused_id
-        cur_player = Player(self._game, conn, cur_id)
+        cur_player = Player(self._game, conn, cur_id, self)
         self._players[cur_id] = cur_player
         self._game.add_player(cur_player)
         cur_player.start()

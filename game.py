@@ -64,13 +64,13 @@ class Game(object):
 
     def __init__(self):
         self._last_tick_time = None
-        self._players = dict()
+        self.players = dict()
         self._prizes = dict()
 
 
     def get_player_free_cells(self, exclude=None):
         all_cells = set((x, y) for x in range(self.WIDTH) for y in range(self.HEIGHT))
-        player_cells = set(cell for pid, player in self._players.items() for cell in player.cells
+        player_cells = set(cell for pid, player in self.players.items() for cell in player.cells
                            if pid != exclude)
         return all_cells - player_cells
 
@@ -85,7 +85,7 @@ class Game(object):
 
     def extract_tick_commands(self):
         commands = dict()
-        for pid, player in self._players.items():
+        for pid, player in self.players.items():
             commands[pid] = player.interactor.extract_command(timeout=self.get_max_timeout())
         return commands
 
@@ -96,23 +96,23 @@ class Game(object):
             time.sleep(self.get_max_timeout())
 
     def process_tick(self, commands):
-        for pid, player in self._players.items():
+        for pid, player in self.players.items():
             player.set_direction(commands[pid])
 
         self.spawn_prizes()
 
-        for player in self._players.values():
+        for player in self.players.values():
             player.move_tail()
-        for player in self._players.values():
+        for player in self.players.values():
             player.move_head()
         pids_to_remove = []
-        for pid, player in self._players.values():
+        for pid, player in self.players.values():
             player_free_cells = self.get_player_free_cells(exclude=pid)
             if player.cells[0] not in player_free_cells:
                 player.annouce_remove_self()
                 pids_to_remove.append(pid)
         for pid in pids_to_remove:
-            del self._players[pid]
+            del self.players[pid]
 
     def spawn_prizes(self):
         while len(self._prizes) < self.MAX_PRIZES:
@@ -136,7 +136,7 @@ class Game(object):
         center = player.cells[0]
         lu = Cell(center.x - self.SCREEN_WIDTH // 2, center.y - self.SCREEN_HEIGHT // 2)
         result = [['.' for y in range(self.SCREEN_HEIGHT)] for x in range(self.SCREEN_WIDTH)]
-        for pid, player in self._players.items():
+        for pid, player in self.players.items():
             sym = '*' if pid == my_pid else random.choice(string.ascii_lowercase)
             for c in player.cells:
                 self._add_cell_to_result(c, lu, sym, result)

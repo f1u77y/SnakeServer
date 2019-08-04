@@ -11,10 +11,18 @@ class PlayerInteractor(object):
         self._input_thread = threading.Thread(target=self.input_worker)
         self._output_thread = threading.Thread(target=self.output_worker)
         self._commands_queue = queue.Queue()
+        self._is_running = True
 
     def start(self):
         self._input_thread.start()
         self._output_thread.start()
+
+    def stop(self):
+        self._is_running = False
+        self._conn.shutdown()
+        self._conn.close()
+        self._input_thread.join()
+        self._output_thread.join()
 
     def recv_command(self):
         cmd = self._conn.recv_until('\n').decode('ascii')
@@ -28,11 +36,11 @@ class PlayerInteractor(object):
         self._conn.send_line(field, ending='\n')
 
     def input_worker(self):
-        while True:
+        while self._is_running:
             self._commands_queue.put(self.recv_command())
 
     def output_worker(self):
-        while True:
+        while self._is_running:
             self.send_game_state()
 
     def extract_command(self, timeout=None):

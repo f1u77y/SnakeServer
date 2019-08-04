@@ -8,11 +8,13 @@ class PlayerInteractor(object):
         self._game = g
         self._conn = nclib.netcat.Netcat(conn)
         self._pid = pid
-        self._thread = threading.Thread(target=self.interact)
+        self._input_thread = threading.Thread(target=self.input_worker)
+        self._output_thread = threading.Thread(target=self.output_worker)
         self._commands_queue = queue.Queue()
 
     def start(self):
-        self._thread.start()
+        self._input_thread.start()
+        self._output_thread.start()
 
     def recv_command(self):
         cmd = self._conn.recv_until('\n').decode('ascii')
@@ -25,10 +27,13 @@ class PlayerInteractor(object):
         field = ''.join(''.join(row) for row in field).encode('ascii')
         self._conn.send_line(field, ending='\n')
 
-    def interact(self):
+    def input_worker(self):
+        while True:
+            self._commands_queue.put(self.recv_command())
+
+    def output_worker(self):
         while True:
             self.send_game_state()
-            self._commands_queue.put(self.recv_command())
 
     def extract_command(self, timeout=None):
         try:

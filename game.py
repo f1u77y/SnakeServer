@@ -30,7 +30,8 @@ def move_cell(c, direction):
 
 
 class Player(object):
-    def __init__(self, cell, direction, interactor):
+    def __init__(self, game, cell, direction, interactor):
+        self._game = game
         self.cells = deque((cell,))
         self.direction = direction
         self.interactor = interactor

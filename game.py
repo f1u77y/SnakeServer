@@ -1,6 +1,7 @@
 import time
 import random
 import logging
+import string
 
 from collections import namedtuple, deque, defaultdict
 
@@ -52,6 +53,7 @@ class Player(object):
         self.cells = deque((cell,))
         self.direction = direction
         self.interactor = interactor
+        self.symbol = random.choice(string.ascii_lowercase)
 
     def set_direction(self, direction):
         if direction not in opposite_direction or direction == opposite_direction[self.direction]:
@@ -158,7 +160,7 @@ class Game(object):
         lu = Cell(center.x - self.SCREEN_WIDTH // 2, center.y - self.SCREEN_HEIGHT // 2)
         result = [['.' for y in range(self.SCREEN_HEIGHT)] for x in range(self.SCREEN_WIDTH)]
         for pid, player in self.players.items():
-            sym = '*' if pid == my_pid else random.choice("abcdefgiasldlkjwq")
+            sym = '*' if pid == my_pid else player.symbol
             for c in player.cells:
                 self._add_cell_to_result(c, lu, sym, result)
         for c in self._prizes.keys():

@@ -2,7 +2,7 @@ import time
 import random
 import logging
 
-from collections import namedtuple, deque
+from collections import namedtuple, deque, defaultdict
 
 DIRECTIONS = ('left', 'up', 'right', 'down')
 
@@ -31,6 +31,21 @@ def move_cell(c, direction):
         return c
 
 
+class NonZeroDefaultDict(defaultdict):
+    def __init__(self, *args, **kwargs):
+        zero = kwargs.pop('zero', 0)
+        super().__init__(*args, **kwargs)
+        self._zero = zero
+
+    def __setitem__(self, key, value):
+        # Allow creating item with value = zero but disallow changing existing item to zero
+        # This code proves there is a bug in author's genetic code
+        if value == self._zero and key in self:
+            del self[key]
+        else:
+            super().__setitem__(key, value)
+
+
 class Player(object):
     def __init__(self, game, cell, direction, interactor):
         self._game = game
@@ -47,12 +62,16 @@ class Player(object):
         new_head = move_cell(self.cells[0], self.direction)
         if new_head not in self._game._prizes:
             if len(self.cells) > 1:
-                self.cells.pop()
+                old_tail = self.cells.pop()
+                self._game.free_cells.add(old_tail)
+                self._game.player_cells[old_tail] -= 1
 
     def move_head(self):
         new_head = move_cell(self.cells[0], self.direction)
-        self._game._prizes.pop(new_head, None)
+        cur_prize = self._game._prizes.pop(new_head, None)
         self.cells.appendleft(new_head)
+        self._game.free_cells.discard(new_head)
+        self._game.player_cells[new_head] += 1
 
 
 class Game(object):
@@ -69,18 +88,11 @@ class Game(object):
         self._last_tick_time = None
         self.players = dict()
         self._prizes = dict()
-
-    def get_player_free_cells(self, exclude=None):
-        all_cells = set(Cell(x, y) for x in range(self.WIDTH) for y in range(self.HEIGHT))
-        player_cells = set(cell for pid, player in self.players.items() for cell in player.cells
-                           if pid != exclude)
-        return all_cells - player_cells
+        self.free_cells = set(Cell(x, y) for x in range(self.HEIGHT) for y in range(self.WIDTH))
+        self.player_cells = NonZeroDefaultDict(int, zero=0)
 
     def get_random_free_cell(self):
-        player_free_cells = self.get_player_free_cells()
-        prize_cells = set(self._prizes.keys())
-        free_cells = player_free_cells - prize_cells
-        return random.choice(tuple(free_cells))
+        return random.choice(tuple(self.free_cells))
 
     def get_max_timeout(self):
         return max(0, self.TICK_DURATION - (time.time() - self._last_tick_time))
@@ -109,16 +121,20 @@ class Game(object):
             player.move_head()
         pids_to_remove = []
         for pid, player in self.players.items():
-            player_free_cells = self.get_player_free_cells(exclude=pid)
-            if player.cells[0] not in player_free_cells:
+            if self.player_cells[player.cells[0]] > 1:
                 # player.annouce_remove_self()
                 pids_to_remove.append(pid)
         for pid in pids_to_remove:
+            for cell in self.players[pid].cells:
+                self.free_cells.add(cell)
+                self.player_cells[cell] -= 1
             del self.players[pid]
 
     def spawn_prizes(self):
         if len(self._prizes) < self.MAX_PRIZES:
-            self._prizes[self.get_random_free_cell()] = +1
+            cur_prize = self.get_random_free_cell()
+            self._prizes[cur_prize] = +1
+            self.free_cells.discard(cur_prize)
 
     def add_player(self, interactor):
         initial_cell = self.get_random_free_cell()
@@ -126,6 +142,8 @@ class Game(object):
         player = Player(self, initial_cell, direction, interactor)
         logging.info("Add player with pid %s", interactor._pid)
         self.players[interactor._pid] = player
+        self.free_cells.discard(initial_cell)
+        self.player_cells[initial_cell] += 1
 
     def _add_cell_to_result(self, c, lu, sym, result):
             x, y = c

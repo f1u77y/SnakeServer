@@ -172,15 +172,17 @@ class Game(object):
         vertical_borders = [Cell(0, y) for y in range(1, self.HEIGHT - 1)]
         vertical_borders += [Cell(self.WIDTH - 1, y) for y in range(1, self.HEIGHT - 1)]
         for c in vertical_borders:
-            self._add_cell_to_result(c, lu, '=', result)
+            self._add_cell_to_result(c, lu, '═', result)
 
         horizontal_borders = [Cell(x, 0) for x in range(1, self.WIDTH - 1)]
         horizontal_borders += [Cell(x, self.HEIGHT - 1) for x in range(1, self.WIDTH - 1)]
         for c in horizontal_borders:
-            self._add_cell_to_result(c, lu, '|', result)
+            self._add_cell_to_result(c, lu, '║', result)
+
 
         corners = [Cell(0, 0), Cell(0, self.HEIGHT - 1), Cell(self.WIDTH - 1, 0), Cell(self.WIDTH - 1, self.HEIGHT - 1)]
-        for c in corners:
-            self._add_cell_to_result(c, lu, '#', result)
+        corner_chars = ['╔', '╗', '╚', '╝']
+        for cell, char in zip(corners, corner_chars):
+            self._add_cell_to_result(cell, lu, char, result)
 
         return result

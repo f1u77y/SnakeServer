@@ -6,7 +6,7 @@ import nclib.netcat
 
 
 class PlayerInteractor(object):
-    def __init__(self, g, conn, pid):
+    def __init__(self, g, conn, pid, cv):
         self._game = g
         self._conn = nclib.netcat.Netcat(conn)
         self._pid = pid
@@ -14,6 +14,8 @@ class PlayerInteractor(object):
         self._output_thread = threading.Thread(target=self.output_worker)
         self._last_command = 0
         self._is_running = True
+        self._send_cv = cv
+        self.player_is_dead = False
 
     def start(self):
         self._input_thread.start()
@@ -36,15 +38,21 @@ class PlayerInteractor(object):
             return cmd
 
     def send_game_state(self):
-        field = self._game.get_visible_part(self._pid)
-        field = ''.join(''.join(row) for row in field)
-        data = json.dumps({
-            "width": self._game.SCREEN_WIDTH,
-            "height": self._game.SCREEN_HEIGHT,
-            "raw_map": field,
-        })
+        with self._send_cv:
+            self._send_cv.wait()
+
+        if self.player_is_dead:
+            data = json.dumps({"type": "end_game"})
+        else:
+            field = self._game.get_visible_part(self._pid)
+            field = ''.join(''.join(row) for row in field)
+            data = json.dumps({
+                "type": "tick",
+                "width": self._game.SCREEN_WIDTH,
+                "height": self._game.SCREEN_HEIGHT,
+                "raw_map": field,
+            })
         self._conn.send_line(data.encode(), ending=b'\n')
-        time.sleep(0.1)
 
     def input_worker(self):
         while self._is_running:

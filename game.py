@@ -2,6 +2,7 @@ import time
 import random
 import logging
 import string
+import threading
 
 from collections import namedtuple, deque, defaultdict
 
@@ -92,6 +93,7 @@ class Game(object):
         self._prizes = dict()
         self.free_cells = set(Cell(x, y) for x in range(self.HEIGHT) for y in range(self.WIDTH))
         self.player_cells = NonZeroDefaultDict(int, zero=0)
+        self.send_cv = threading.Condition()
 
     def get_random_free_cell(self):
         return random.choice(tuple(self.free_cells))
@@ -124,12 +126,15 @@ class Game(object):
         pids_to_remove = []
         for pid, player in self.players.items():
             if self.player_cells[player.cells[0]] > 1:
-                # player.annouce_remove_self()
                 pids_to_remove.append(pid)
+        with self.send_cv:
+            self.send_cv.notify_all()
         for pid in pids_to_remove:
             for cell in self.players[pid].cells:
                 self.free_cells.add(cell)
                 self.player_cells[cell] -= 1
+            self.players[pid].interactor.player_is_dead = True
+        for pid in pids_to_remove:
             del self.players[pid]
 
     def spawn_prizes(self):

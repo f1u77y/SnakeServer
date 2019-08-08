@@ -21,7 +21,7 @@ class PlayersThreadPool(object):
         if self._min_unused_id >= self.MAX_PLAYERS:
             raise ValueError('Maximum players limit reached')
         cur_id = self._min_unused_id
-        interactor = player_interactor.PlayerInteractor(self._game, conn, cur_id)
+        interactor = player_interactor.PlayerInteractor(self._game, conn, cur_id, self._game.send_cv)
         self._players[cur_id] = interactor
         self._game.add_player(interactor)
         interactor.start()
@@ -50,5 +50,3 @@ class PlayersThreadPool(object):
         self._server.shutdown(socket.SHUT_RDWR)
         self._server.close()
         self._connections_thread.join()
-
-

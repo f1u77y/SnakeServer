@@ -87,7 +87,7 @@ class Game(object):
         self._last_tick_time = None
         self.players = dict()
         self._prizes = dict()
-        self.free_cells = set(Cell(x, y) for x in range(self.HEIGHT) for y in range(self.WIDTH))
+        self.free_cells = set(Cell(x, y) for x in range(0, self.HEIGHT - 1) for y in range(0, self.WIDTH - 1))
         self.player_cells = NonZeroDefaultDict(int, zero=0)
         self.send_cv = threading.Condition()
 

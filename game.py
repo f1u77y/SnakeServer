@@ -153,34 +153,34 @@ class Game(object):
             x, y = c
             x -= lu.x
             y -= lu.y
-            if x < 0 or self.SCREEN_WIDTH <= x or y < 0 or self.SCREEN_HEIGHT <= y:
+            if x < 0 or self.SCREEN_HEIGHT <= x or y < 0 or self.SCREEN_WIDTH <= y:
                 return
             result[x][y] = sym
 
     def get_visible_part(self, my_pid):
         center = self.players[my_pid].cells[0]
-        lu = Cell(center.x - self.SCREEN_WIDTH // 2, center.y - self.SCREEN_HEIGHT // 2)
-        result = [[' ' for y in range(self.SCREEN_HEIGHT)] for x in range(self.SCREEN_WIDTH)]
+        lu = Cell(center.x - self.SCREEN_HEIGHT // 2, center.y - self.SCREEN_WIDTH // 2)
+        result = [[' ' for y in range(self.SCREEN_WIDTH)] for x in range(self.SCREEN_HEIGHT)]
         for pid, player in self.players.items():
             sym = '*' if pid == my_pid else player.symbol
             for c in player.cells:
                 self._add_cell_to_result(c, lu, sym, result)
         for c in self._prizes.keys():
             self._add_cell_to_result(c, lu, '$', result)
-        result[self.SCREEN_WIDTH // 2][self.SCREEN_HEIGHT // 2] = '@'
+        result[self.SCREEN_HEIGHT // 2][self.SCREEN_WIDTH // 2] = '@'
 
-        vertical_borders = [Cell(0, y) for y in range(1, self.HEIGHT - 1)]
-        vertical_borders += [Cell(self.WIDTH - 1, y) for y in range(1, self.HEIGHT - 1)]
+        vertical_borders = [Cell(0, y) for y in range(1, self.WIDTH - 1)]
+        vertical_borders += [Cell(self.HEIGHT - 1, y) for y in range(1, self.WIDTH - 1)]
         for c in vertical_borders:
             self._add_cell_to_result(c, lu, '═', result)
 
-        horizontal_borders = [Cell(x, 0) for x in range(1, self.WIDTH - 1)]
-        horizontal_borders += [Cell(x, self.HEIGHT - 1) for x in range(1, self.WIDTH - 1)]
+        horizontal_borders = [Cell(x, 0) for x in range(1, self.HEIGHT - 1)]
+        horizontal_borders += [Cell(x, self.WIDTH - 1) for x in range(1, self.HEIGHT - 1)]
         for c in horizontal_borders:
             self._add_cell_to_result(c, lu, '║', result)
 
 
-        corners = [Cell(0, 0), Cell(0, self.HEIGHT - 1), Cell(self.WIDTH - 1, 0), Cell(self.WIDTH - 1, self.HEIGHT - 1)]
+        corners = [Cell(0, 0), Cell(0, self.WIDTH - 1), Cell(self.HEIGHT - 1, 0), Cell(self.HEIGHT - 1, self.WIDTH - 1)]
         corner_chars = ['╔', '╗', '╚', '╝']
         for cell, char in zip(corners, corner_chars):
             self._add_cell_to_result(cell, lu, char, result)

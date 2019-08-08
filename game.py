@@ -160,7 +160,7 @@ class Game(object):
     def get_visible_part(self, my_pid):
         center = self.players[my_pid].cells[0]
         lu = Cell(center.x - self.SCREEN_WIDTH // 2, center.y - self.SCREEN_HEIGHT // 2)
-        result = [['.' for y in range(self.SCREEN_HEIGHT)] for x in range(self.SCREEN_WIDTH)]
+        result = [[' ' for y in range(self.SCREEN_HEIGHT)] for x in range(self.SCREEN_WIDTH)]
         for pid, player in self.players.items():
             sym = '*' if pid == my_pid else player.symbol
             for c in player.cells:

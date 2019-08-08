@@ -109,6 +109,9 @@ class Game(object):
             self.process_tick(self.extract_tick_commands())
             time.sleep(self.TICK_DURATION)
 
+    def is_in_border(self, c):
+        return c.x in (-1, self.HEIGHT) or c.y in (-1, self.WIDTH)
+
     def process_tick(self, commands):
         logging.info("%s", self.players)
         for pid, player in self.players.items():
@@ -119,7 +122,7 @@ class Game(object):
             player.move()
         pids_to_remove = []
         for pid, player in self.players.items():
-            if self.player_cells[player.cells[0]] > 1:
+            if self.player_cells[player.cells[0]] > 1 or self.is_in_border(player.cells[0]):
                 pids_to_remove.append(pid)
         with self.send_cv:
             self.send_cv.notify_all()

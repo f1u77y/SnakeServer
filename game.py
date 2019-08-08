@@ -110,7 +110,7 @@ class Game(object):
             time.sleep(self.TICK_DURATION)
 
     def is_in_border(self, c):
-        return c.x in (-1, self.HEIGHT) or c.y in (-1, self.WIDTH)
+        return c.x in (0, self.HEIGHT - 1) or c.y in (0, self.WIDTH - 1)
 
     def process_tick(self, commands):
         logging.info("%s", self.players)

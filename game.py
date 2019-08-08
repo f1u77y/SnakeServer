@@ -61,17 +61,13 @@ class Player(object):
             return
         self.direction = direction
 
-    def move_tail(self):
-        new_head = move_cell(self.cells[0], self.direction)
-        if new_head not in self._game._prizes:
-            if len(self.cells) > 1:
-                old_tail = self.cells.pop()
-                self._game.free_cells.add(old_tail)
-                self._game.player_cells[old_tail] -= 1
-
-    def move_head(self):
+    def move(self):
         new_head = move_cell(self.cells[0], self.direction)
         cur_prize = self._game._prizes.pop(new_head, None)
+        if cur_prize is None:
+            old_tail = self.cells.pop()
+            self._game.free_cells.add(old_tail)
+            self._game.player_cells[old_tail] -= 1
         self.cells.appendleft(new_head)
         self._game.free_cells.discard(new_head)
         self._game.player_cells[new_head] += 1
@@ -120,9 +116,7 @@ class Game(object):
 
         self.spawn_prizes()
         for player in self.players.values():
-            player.move_tail()
-        for player in self.players.values():
-            player.move_head()
+            player.move()
         pids_to_remove = []
         for pid, player in self.players.items():
             if self.player_cells[player.cells[0]] > 1:

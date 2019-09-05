@@ -1,14 +1,12 @@
 import threading
 import json
-import time
-
-import nclib.netcat
+from sockwrapper import SocketWrapper
 
 
 class PlayerInteractor(object):
-    def __init__(self, g, conn, pid, cv):
+    def __init__(self, g, conn: SocketWrapper, pid, cv):
         self._game = g
-        self._conn = nclib.netcat.Netcat(conn)
+        self._conn = conn
         self._pid = pid
         self._input_thread = threading.Thread(target=self.input_worker)
         self._output_thread = threading.Thread(target=self.output_worker)
@@ -52,7 +50,7 @@ class PlayerInteractor(object):
                 "height": self._game.SCREEN_HEIGHT,
                 "raw_map": field,
             })
-        self._conn.send_line(data.encode(), ending=b'\n')
+        self._conn.send_line(data.encode(), end=b'\n')
 
     def input_worker(self):
         while self._is_running:

@@ -113,7 +113,6 @@ class Game(object):
         return c.x in (0, self.HEIGHT - 1) or c.y in (0, self.WIDTH - 1)
 
     def process_tick(self, commands):
-        logging.info("%s", self.players)
         for pid, player in self.players.items():
             player.set_direction(commands[pid])
 

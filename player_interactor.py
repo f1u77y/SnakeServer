@@ -1,17 +1,19 @@
 import threading
-import queue
-import nclib.netcat
-import game
+import json
+from sockwrapper import SocketWrapper
+
 
 class PlayerInteractor(object):
-    def __init__(self, g, conn, pid):
+    def __init__(self, g, conn: SocketWrapper, pid, cv):
         self._game = g
-        self._conn = nclib.netcat.Netcat(conn)
+        self._conn = conn
         self._pid = pid
         self._input_thread = threading.Thread(target=self.input_worker)
         self._output_thread = threading.Thread(target=self.output_worker)
-        self._commands_queue = queue.Queue()
+        self._last_command = 0
         self._is_running = True
+        self._send_cv = cv
+        self.player_is_dead = False
 
     def start(self):
         self._input_thread.start()
@@ -25,26 +27,38 @@ class PlayerInteractor(object):
         self._output_thread.join()
 
     def recv_command(self):
-        cmd = self._conn.recv_until('\n').decode('ascii')
-        if cmd == 'none':
+        data = self._conn.recv_until(b'\n')
+        try:
+            cmd = json.loads(data.decode())["direction"]
+        except Exception:
             cmd = None
-        return cmd
+        finally:
+            return cmd
 
     def send_game_state(self):
-        field = self._game.get_visible_part(self._pid)
-        field = ''.join(''.join(row) for row in field).encode('ascii')
-        self._conn.send_line(field, ending='\n')
+        with self._send_cv:
+            self._send_cv.wait()
+
+        if self.player_is_dead:
+            data = json.dumps({"type": "end_game"})
+        else:
+            field = self._game.get_visible_part(self._pid)
+            field = ''.join(''.join(row) for row in field)
+            data = json.dumps({
+                "type": "tick",
+                "width": self._game.SCREEN_WIDTH,
+                "height": self._game.SCREEN_HEIGHT,
+                "raw_map": field,
+            })
+        self._conn.send_line(data.encode(), end=b'\n')
 
     def input_worker(self):
         while self._is_running:
-            self._commands_queue.put(self.recv_command())
+            self._last_command = self.recv_command()
 
     def output_worker(self):
         while self._is_running:
             self.send_game_state()
 
     def extract_command(self, timeout=None):
-        try:
-            return self._commands_queue.get(block=True, timeout=timeout)
-        except queue.Empty:
-            return None
+        return self._last_command

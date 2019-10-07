@@ -60,5 +60,5 @@ class PlayerInteractor(object):
         while self._is_running:
             self.send_game_state()
 
-    def extract_command(self, timeout=None):
+    def extract_command(self):
         return self._last_command

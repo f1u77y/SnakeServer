@@ -9,10 +9,10 @@ from game import Game
 def set_logger():
     logger = logging.getLogger("")
     logger.setLevel(logging.INFO)
-    fh = logging.FileHandler("server.log")
+    file_handler = logging.FileHandler("server.log")
     formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
     logger.info("logger initialized")
 
 

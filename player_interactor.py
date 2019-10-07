@@ -29,11 +29,9 @@ class PlayerInteractor(object):
     def recv_command(self):
         data = self._conn.recv_until(b'\n')
         try:
-            cmd = json.loads(data.decode())["direction"]
-        except Exception:
-            cmd = None
-        finally:
-            return cmd
+            return json.loads(data.decode())["direction"]
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return None
 
     def send_game_state(self):
         with self._send_cv:
